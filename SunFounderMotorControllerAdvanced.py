@@ -1,210 +1,225 @@
 #!/usr/bin/env python
 # coding: latin-1
 # Autor:   Ingmar Stapel
-# Datum:   20170811
-# Version:   1.0
+# Datum:   20170812
+# Version:   1.1
 # Homepage:   http://custom-build-robots.com
+# Dieses Programm ist das sogenannte Steuerprogramm fuer das Roboter
+# Auto von SunFounder ueber die Konsole und Tastatur vom PC aus.
 
-# Dieses Programm wurde fuer die Ansteuerung der Motoren des 
-# SunFounder Video Car entwickelt. Es folgt dabei der Belegung
-# der GPIO Pins am Raspberry Pi sowie der am PCA9685 Servo
-# Kontroller wie von SunFounder beschreiben.
+# Hinweis: 
+# Es muss noch das Modul readchar mit dem folgenden 
+# Befehl installiert werden.
+# Befehl: sudo pip install readchar
 
-# Hinweis:
-# Es muss noch die Adafruit PCA9685 Bibliothek für dieses Programm
-# unter Raspbian installiert werden.
-# Eine Installationsanleitung findet Ihr auf meinem Blog hier:
-# https://custom-build-robots.com/raspberry-pi-elektronik/16-kanal-pca9685-servo-kontroller-teil-3-ansteuerung-einer-l298n-h-bruecke/8821
+# Es werden verschiedene Python Klassen importiert deren Funktionen
+# im Programm benoetigt werden fuer die Programmverarbeitung.
+import sys, tty, termios, os, readchar
 
-# Dieses Programm muss von einem uebergeordneten Programm aufgerufen 
-# werden, dass die Steuerung des SunFounderMotorController.py
-# Programmes übernimmt.
-# Dazu kann das Programm SunFounderRobotControl.py verwendet werden.
+# Das Programm SunFounderMotorController.py wird als Modul geladen. 
+# Es stellt die Funktionen fuer die Steuerung der H-Bruecke zur 
+# Verfuegung.
+import SunFounderMotorControllerAdvanced as MotorControl
 
-# Es wird die Klasse RPi.GPIO importiert, die die Ansteuerung
-# der GPIO Pins des Raspberry Pi ermoeglicht.
-from __future__ import division
-import RPi.GPIO as io
-io.setmode(io.BCM)
+# Variablen Definition der Geschwindigkeit der Motoren des Roboter
+# Autos.
+speed = 0
 
-import time
+# Variablen Definition des Lenkwinkels des Lenk-Servo Motors.
+# Die neutrale Stellung war bei mit 530 erreicht. 
+# Diese kann aber sehr sicher abweichen und hier muss ausprobiert 
+# werden was zu Deinem Auto am besten passt.
+steering_value = 530
 
-# Importiere die Adafruit PCA9685 Bibliothek
-import Adafruit_PCA9685
+# Variablen Definition des Schwenkwinkels der Kamera.
+# Die neutrale Stellung der Kamera war bei mit 530 erreicht. 
+# Diese kann aber sehr sicher abweichen und hier muss ausprobiert 
+# werden was zu Deinem Auto am besten passt.
+pan = 440
 
-# Initialise the PCA9685 using the default address (0x40).
-PCA9685_pwm = Adafruit_PCA9685.PCA9685()
 
-# Alternatively specify a different address and/or bus:
-#pwm = Adafruit_PCA9685.PCA9685(address=0x41, busnum=2)
+# Variablen Definition des Neigens der Kamera.
+# Die neutrale Stellung der Kamera war bei mit 530 erreicht. 
+# Diese kann aber sehr sicher abweichen und hier muss ausprobiert 
+# werden was zu Deinem Auto am besten passt.
+tilt = 260
 
-# Set frequency to 100hz, good for l298n h-bridge.
-PCA9685_pwm.set_pwm_freq(60)
+# Die Variable camera_mode setzt den Modus ob die Kaerma der 
+# Lenkbewegung folgt oder manuell gesteuert wird.
+camera_mode = "a"
 
-# Die Variable duty_cycle gibt die maximale Einschaltdauer der 
-# Motoren pro 100 Herts vor. Dier liegt zwischen 0 bis 4095.
-# Für die Geschwindigkeit der Motoren beginnt die Einschaltdauer
-# immer bei 0 und endet bei einem Wert ]0, 4095[.
-duty_cycle = 4095
+# Das Menue fuer den Anwender wenn er das Programm ausfuehrt.
+# Das Menue erklaert mit welchen Tasten das Auto gesteuert wird.
+print("w/s: beschleunigen")
+print("a/d: lenken")
+print("j/l: Kamera links / rechts")
+print("q: stoppt die Motoren")
+print("x: Programm beenden")
 
-# Mit dem folgenden Aufruf werden eventuelle Warnungen die die 
-# Klasse RPi.GPIO ausgibt deaktiviert.
-io.setwarnings(False)
+# Die Funktion getch() nimmt die Tastatureingabe des Anwenders
+# entgegen. Die gedrueckten Buchstaben werden eingelesen. Sie werden
+# benoetigt um die Richtung und Geschwindigkeit des Roboter-Autos
+# festlegen zu koennen.
+def getch():
+   ch = readchar.readchar()
+   return ch
 
-# Im folgenden Programmabschnitt wird die logische Verkabelung des 
-# Raspberry Pi im Programm abgebildet. Dazu werden den vom Motor 
-# Treiber bekannten Pins nach BMC die GPIO Adressen zugewiesen.
-
-# Bitte hier der Pin Belegung aus der SunFounder Anleitung folgen
-# und die BCM GPIO Nummerierung verwenden und nicht die Pin Nummer.
-
-# --- START KONFIGURATION GPIO Adressen ---
-IN1 = 17
-IN2 = 18
-IN3 = 27
-IN4 = 22
-# --- ENDE KONFIGURATION GPIO Adressen ---
-
-# Der Variable leftmotor_in1_pin wird die Varibale IN1 zugeorndet. 
-# Der Variable leftmotor_in2_pin wird die Varibale IN2 zugeorndet. 
-leftmotor_in1_pin = IN1
-leftmotor_in2_pin = IN2
-# Beide Variablen leftmotor_in1_pin und leftmotor_in2_pin werden als
-# Ausgaenge "OUT" definiert. Mit den beiden Variablen wird die
-# Drehrichtung der Motoren gesteuert.
-io.setup(leftmotor_in1_pin, io.OUT)
-io.setup(leftmotor_in2_pin, io.OUT)
-
-# Der Variable rightmotor_in1_pin wird die Varibale IN1 zugeorndet. 
-# Der Variable rightmotor_in2_pin wird die Varibale IN2 zugeorndet. 
-rightmotor_in1_pin = IN3
-rightmotor_in2_pin = IN4
-# Beide Variablen rightmotor_in1_pin und rightmotor_in2_pin werden 
-# als Ausgaenge "OUT" definiert. Mit den beiden Variablen wird die
-# Drehrichtung der Motoren gesteuert.
-io.setup(rightmotor_in1_pin, io.OUT)
-io.setup(rightmotor_in2_pin, io.OUT)
-
-# Die GPIO Pins des Raspberry Pi werden initial auf False gesetzt.
-# So ist sichger gestellt, dass kein HIGH Signal anliegt und der 
-# Motor Treiber nicht unbeabsichtigt aktiviert wird.
-io.output(leftmotor_in1_pin, False)
-io.output(leftmotor_in2_pin, False)
-io.output(rightmotor_in1_pin, False)
-io.output(rightmotor_in2_pin, False)
-
-# Die Funktion setMotorMode(mode) legt die Drehrichtung der beiden
-# Motoren fest. Die Funktion verfügt über eine Eingabevariable.
-# mode      -> diese Variable legt fest welcher Modus gewaehlt ist
-
-def setMotorMode(mode):
-   if mode == "reverse":
-      # Motor 1
-      io.output(leftmotor_in1_pin, True)
-      io.output(leftmotor_in2_pin, False)
-      # Motor 2
-      io.output(rightmotor_in1_pin, True)
-      io.output(rightmotor_in2_pin, False) 
-   elif  mode == "forward":
-      # Motor 1
-      io.output(leftmotor_in1_pin, False)
-      io.output(leftmotor_in2_pin, True)
-      # Motor 2
-      io.output(rightmotor_in1_pin, False)
-      io.output(rightmotor_in2_pin, True)
-   # Stoppen der beiden Motoren
-   else:
-      io.output(leftmotor_in1_pin, False)
-      io.output(leftmotor_in2_pin, False)
-      io.output(rightmotor_in1_pin, False)
-      io.output(rightmotor_in2_pin, False)
-
-# Die Funktion setMotorPower(power) setzt die Geschwindigkeit der 
-# beiden Motoren. Die Geschwindigkeit wird als Wert zwischen -1
-# und 1 uebergeben. Bei einem negativen Wert sollen sich die Motoren 
-# rueckwaerts drehen ansonsten vorwaerts. 
-# Anschliessend werden aus den uebergebenen Werten die notwendigen 
-# %-Werte fuer das PWM Signal berechnet.
-
-# Beispiel:
-# Die Geschwindigkeit kann mit +1 (max) und -1 (min) gesetzt werden.
-# Das Beispielt erklaert wie die Geschwindigkeit berechnet wird.
-# SetMotorLeft(0)     -> der linke Motor dreht mit 0% ist gestoppt
-# SetMotorLeft(0.75)  -> der linke Motor dreht mit 75% vorwaerts
-# SetMotorLeft(-0.5)  -> der linke Motor dreht mit 50% rueckwaerts
-# SetMotorLeft(1)     -> der linke Motor dreht mit 100% vorwaerts
-def setMotorPower(power):
-   int(power)
-   if power < 0:
-      # Rueckwaertsmodus fuer die beiden Motoren
-      setMotorMode("reverse")
-      pwm = -int(duty_cycle * power)
-      if pwm > duty_cycle:
-         pwm = duty_cycle
-   elif power > 0:
-      # Vorwaertsmodus fuer die beiden Motoren
-      setMotorMode("forward")
-      pwm = int(duty_cycle * power)
-      if pwm > duty_cycle:
-         pwm = duty_cycle
-   else:
-      # Stoppmodus fuer die beiden Motoren
-      setMotorMode("stopp")
-      pwm = 0
-   # Hier werden die beiden PWM Leitungen zu dem Motor Treiber
-   # angesteuert. Hier auch bitte wieder die Pin Belegung aus der 
-   # Anleitung von SunFounder beachten.
- 
-   PCA9685_pwm.set_pwm(4, 0, pwm)
-   PCA9685_pwm.set_pwm(5, 0, pwm)
-
-# Die Lenkung in dem SunFounder Roboter Auto ist mit einem Servo 
-# Motor umgesetzt. Die folgende Funktion setSteering(value) 
-# steuert den Servo Motor an und lenkt somit das Roboter Auto.
-def setSteering(value):
-   int(value)
-   # Es wird der initiale duty_cycle durch zwei dividiert, da 
-   # die neutrale Stellung des Servo Motors in der Mitte sein 
-   # sollte für die geradeaus Fahrt.
-   # Wenn dem so nicht ist, kann mit der variable trim eine
-   # manuelle Anpassung / Korrektur vorgenommen werden.
-   trim = 0
-#   steering_pwm = int(duty_cycle/2 + value) + trim
-   steering_pwm = int(value) + trim   
-   if steering_pwm > duty_cycle:
-      steering_pwm = duty_cycle
-   elif steering_pwm < 0:
-      steering_pwm = 0
-   # Jetzt wird der Servo für die Lenkung angesprochen
-   PCA9685_pwm.set_pwm(0, 0, steering_pwm) 
+# Die Funktion printscreen() gibt immer das aktuelle Menue aus
+# sowie die Geschwindigkeit der linken und rechten Motoren wenn
+# es aufgerufen wird.
+def printscreen():
+   # der Befehl os.system('clear') leert den Bildschirmihalt vor
+   # jeder Aktualisierung der Anzeige. So bleibt das Menue stehen
+   # und die Bildschirmanzeige im Terminal Fenster steht still.
+   os.system('clear')
+   print("w/s: beschleunigen")
+   print("a/d: lenken")
+   print("j/l: Kamera links / rechts")
+   print("q: stoppt die Motoren")
+   print("x: Programm beenden")
+   print("================= Fahrzeuganzeige ================")
+   print "Geschwindigkeit der Motoren:      ", speed
+   print "Lenkeinschlag des Roboter Autos: ",  steering_value
+   print "Kamera Drehung des Roboter Autos: ",  pan
+   print "Kamera Neigung des Roboter Autos: ",  tilt
    
+# Diese Endlosschleife wird erst dann beendet wenn der Anwender 
+# die Taste X tippt. Solange das Programm laeuft wird ueber diese
+# Schleife die Eingabe der Tastatur eingelesen.
+while True:
+   # Mit dem Aufruf der Funktion getch() wird die Tastatureingabe 
+   # des Anwenders eingelesen. Die Funktion getch() liesst den 
+   # gedrueckte Buchstabe ein und uebergibt diesen an die 
+   # Variablechar. So kann mit der Variable char weiter 
+   # gearbeitet werden.
+   char = getch()
    
-# Mit dieser Funktion kann die Kamera nach links / recht geschwenkt
-# werden. So ist z. B. das folgen der Lenkbewegung möglich.
-def setPanCamera(value):
-   int(value)
-   trim = 0
-   pan = int(value) + trim  
-   
-   PCA9685_pwm.set_pwm(14, 0, pan)
+   # Das Roboter-Auto faehrt vorwaerts wenn der Anwender die 
+   # Taste "w" drueckt.
+   if(char == "w"):
+      # das Roboter-Auto beschleunigt in Schritten von 10% 
+      # mit jedem Tastendruck des Buchstaben "w" bis maximal 
+      # 100%. Dann faehrt es maximal schnell vorwaerts.
+      speed = speed + 0.1
 
-def setTiltCamera(value):
-   int(value)
-   trim = 0
-   pan = int(value) + trim  
-   
-   PCA9685_pwm.set_pwm(15, 0, pan) 
+      if speed > 1:
+         speed = 1
 
+      # Dem Programm SunFounderMotorController.py welches zu beginn  
+      # importiert wurde wird die Geschwindigkeit fuer 
+      # die Motoren uebergeben.
+      MotorControl.setMotorPower(speed)
+      printscreen()
+
+   # Das Roboter-Auto faehrt rueckwaerts wenn die Taste "s" 
+   # gedrueckt wird.
+   if(char == "s"):
+      # das Roboter-Auto bremst in Schritten von 10% 
+      # mit jedem Tastendruck des Buchstaben "s" bis maximal 
+      # -100%. Dann faehrt es maximal schnell rueckwaerts.
+      speed = speed - 0.1
+
+      if speed < -1:
+         speed = -1
+         
+      # Dem Programm L298NMotorControl welches zu beginn  
+      # importiert wurde wird die Geschwindigkeit fuer 
+      # die linken und rechten Motoren uebergeben.      
+      MotorControl.setMotorPower(speed)
+      printscreen()
+
+    # mit dem druecken der Taste "q" werden die Motoren angehalten
+   if(char == "q"):
+      speed = 0
+      MotorControl.setMotorPower(speed)
+      steering_value = 530
+      pan = 440
+      tilt = 260	  
+      MotorControl.setSteering(steering_value)
+      MotorControl.setTiltCamera(tilt)
+      MotorControl.setPanCamera(pan)
+      printscreen()
+
+   # Kamera schwenkt manuell nach links.
+   if(char == "j"):
+      pan = pan + 10
+         
+      if pan > 660:
+         pan = 660      
+
+      MotorControl.setPanCamera(pan)
+      printscreen()
+	  
+   # Kamera schwenkt manuell nach rechts.
+   if(char == "l"):
+      pan = pan - 10
+         
+      if pan < 230:
+         pan = 230
+      
+      MotorControl.setPanCamera(pan)
+      printscreen()
+
+   # Kamera neigen manuell nach links.
+   if(char == "i"):
+      tilt = tilt + 10
+         
+      if tilt > 660:
+         tilt = 660      
+
+      MotorControl.setTiltCamera(tilt)
+      printscreen()
+	  
+   # Kamera neigen manuell nach rechts.
+   if(char == "k"):
+      tilt = tilt - 10
+         
+      if tilt < 230:
+         tilt = 230
+      
+      MotorControl.setTiltCamera(tilt)
+      printscreen()
+	  
+   # Mit der Taste "d" lenkt das Auto nach rechts. Dazu wird der
+   # Servo Motor angesteuert.
+   if(char == "d"):      
+      steering_value = steering_value + 10
+      
+      if steering_value > 620:
+         steering_value = 620
+      
+      MotorControl.setSteering(steering_value)
+      printscreen()
    
-# Die Funktion exit() setzt die Ausgaenge die den Motor Treiber 
-# steuern auf False. So befindet sich der Motor Treiber nach dem 
-# Aufruf derFunktion in einem gesicherten Zustand und die Motoren 
-# sind gestopped.
-def exit():
-   io.output(leftmotor_in1_pin, False)
-   io.output(leftmotor_in2_pin, False)
-   io.output(rightmotor_in1_pin, False)
-   io.output(rightmotor_in2_pin, False)
-   io.cleanup()
+   # Mit der Taste "a" lenkt das Auto nach links bis die max/min
+   # Geschwindigkeit der linken und rechten Motoren erreicht ist.
+   if(char == "a"):
+      steering_value = steering_value - 10
+         
+      if steering_value < 440:
+         steering_value = 440
+      
+      MotorControl.setSteering(steering_value)
+      printscreen()
+	  
+   # Mit der Taste "x" wird die Endlosschleife beendet 
+   # und das Programm wird ebenfalls beendet. Zum Schluss wird 
+   # noch die Funktion exit() aufgerufen die die Motoren stoppt.
+   if(char == "x"):
+      speed = 0
+      MotorControl.setMotorPower(speed)
+      steering_value = 530
+      pan = 440
+      tilt = 260	  
+      MotorControl.setSteering(steering_value)
+      MotorControl.setTiltCamera(tilt)
+      MotorControl.setPanCamera(pan)	  
+      MotorControl.exit()
+      print("Program Ended")
+      break
+   
+   # Die Variable char wird pro Schleifendurchlauf geleert. 
+   # Das ist notwendig um weitere Eingaben sauber zu übernehmen.
+   char = ""
    
 # Ende des Programmes

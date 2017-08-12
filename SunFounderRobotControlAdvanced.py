@@ -53,6 +53,7 @@ camera_mode = "a"
 print("w/s: beschleunigen")
 print("a/d: lenken")
 print("j/l: Kamera links / rechts")
+print("i/k: Kamera hoch / runter")
 print("q: stoppt die Motoren")
 print("x: Programm beenden")
 
@@ -75,6 +76,7 @@ def printscreen():
    print("w/s: beschleunigen")
    print("a/d: lenken")
    print("j/l: Kamera links / rechts")
+   print("i/k: Kamera hoch / runter")
    print("q: stoppt die Motoren")
    print("x: Programm beenden")
    print("================= Fahrzeuganzeige ================")

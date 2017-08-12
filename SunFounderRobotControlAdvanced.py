@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: latin-1
 # Autor:   Ingmar Stapel
-# Datum:   20170811
-# Version:   1.0
+# Datum:   20170812
+# Version:   1.1
 # Homepage:   http://custom-build-robots.com
 # Dieses Programm ist das sogenannte Steuerprogramm fuer das Roboter
 # Auto von SunFounder ueber die Konsole und Tastatur vom PC aus.
@@ -35,14 +35,14 @@ steering_value = 530
 # Die neutrale Stellung der Kamera war bei mit 530 erreicht. 
 # Diese kann aber sehr sicher abweichen und hier muss ausprobiert 
 # werden was zu Deinem Auto am besten passt.
-pan = 530
+pan = 440
 
 
 # Variablen Definition des Neigens der Kamera.
 # Die neutrale Stellung der Kamera war bei mit 530 erreicht. 
 # Diese kann aber sehr sicher abweichen und hier muss ausprobiert 
 # werden was zu Deinem Auto am besten passt.
-tilt = 530
+tilt = 260
 
 # Die Variable camera_mode setzt den Modus ob die Kaerma der 
 # Lenkbewegung folgt oder manuell gesteuert wird.
@@ -74,13 +74,14 @@ def printscreen():
    os.system('clear')
    print("w/s: beschleunigen")
    print("a/d: lenken")
-   print("c:   Kamera Modus (atomatic / manuell")
-   print("q:   stoppt die Motoren")
-   print("x:   Programm beenden")
+   print("j/l: Kamera links / rechts")
+   print("q: stoppt die Motoren")
+   print("x: Programm beenden")
    print("================= Fahrzeuganzeige ================")
    print "Geschwindigkeit der Motoren:      ", speed
    print "Lenkeinschlag des Roboter Autos: ",  steering_value
-   print "Kamera Winkel des Roboter Autos: ",  pan
+   print "Kamera Drehung des Roboter Autos: ",  pan
+   print "Kamera Neigung des Roboter Autos: ",  tilt
    
 # Diese Endlosschleife wird erst dann beendet wenn der Anwender 
 # die Taste X tippt. Solange das Programm laeuft wird ueber diese
@@ -131,8 +132,14 @@ while True:
    if(char == "q"):
       speed = 0
       MotorControl.setMotorPower(speed)
-      steering_value = 0
+      # Dreht die Servo Motoren auf einen definierten
+      # Ausgangszustand.	
+      steering_value = 530
+      pan = 440
+      tilt = 260	  
       MotorControl.setSteering(steering_value)
+      MotorControl.setTiltCamera(tilt)
+      MotorControl.setPanCamera(pan)
       printscreen()
 
    # Kamera schwenkt manuell nach links.
@@ -203,8 +210,14 @@ while True:
    if(char == "x"):
       speed = 0
       MotorControl.setMotorPower(speed)
-      steering_value = 0
+      # Dreht die Servo Motoren auf einen definierten
+      # Ausgangszustand beim Beenden des Programmes.
+      steering_value = 530
+      pan = 440
+      tilt = 260	  
       MotorControl.setSteering(steering_value)
+      MotorControl.setTiltCamera(tilt)
+      MotorControl.setPanCamera(pan)	  
       MotorControl.exit()
       print("Program Ended")
       break

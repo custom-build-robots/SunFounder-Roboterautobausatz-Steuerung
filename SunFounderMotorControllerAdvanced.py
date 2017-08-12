@@ -132,6 +132,8 @@ while True:
    if(char == "q"):
       speed = 0
       MotorControl.setMotorPower(speed)
+      # Dreht die Servo Motoren auf einen definierten
+      # Ausgangszustand.	
       steering_value = 530
       pan = 440
       tilt = 260	  
@@ -208,6 +210,8 @@ while True:
    if(char == "x"):
       speed = 0
       MotorControl.setMotorPower(speed)
+      # Dreht die Servo Motoren auf einen definierten
+      # Ausgangszustand beim Beenden des Programmes.
       steering_value = 530
       pan = 440
       tilt = 260	  

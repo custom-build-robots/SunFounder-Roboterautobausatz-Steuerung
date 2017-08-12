@@ -4,12 +4,12 @@ Mein Roboter Auto auf Raspberry Pi Basis sieht wie folgt aus.
 ![SunFounder Roboterautobausatz](https://custom-build-robots.com/wp-content/uploads/2017/08/SunFounder_Roboterbausatz_Smart_Video_Car_Kit_Roboter_Auto-768x512.jpg)
 
 ## Python Programm
-Die beiden Pyhton Programme können verwendet werden um das Roboter Auto über die Konsole fernzusteuern. Eine genaue Beschreibung gint es auf meinem Blog auf der folgenden Seite.
+Die beiden Pyhton Programme können verwendet werden um das Roboter Auto über die Konsole fernzusteuern. Eine genaue Beschreibung der Funktionsweise gibt es auf meinem Blog:
 
 [SunFounder Roboterbausatz – Smart Video Car Steuerprogramm](https://custom-build-robots.com/raspberry-pi-roboter/sunfounder-roboterbausatz-smart-video-car-steuerprogramm/9059)
 
 ## Erfahrungsbericht SunFounder Roboterautobausatz Raspberry Pi Video Car
-Ich habe auch auf meinem Blog eine Artikelserie veröffentlicht. Diese finde Ihr hier:
+Ich habe auch auf meinem Blog eine Artikelserie veröffentlicht mit meinen Erfahrungen über das Roboter Auto. Diese Berichte findet Ihr hier:
 
 [SunFounder Roboterbausatz – Smart Video Car für Raspberry Pi](https://custom-build-robots.com/bausatz/sunfounder-roboterbausatz-smart-video-car-kit-fuer-raspberry-pi/9023)
 

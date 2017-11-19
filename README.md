@@ -1,5 +1,5 @@
 # SunFounder Roboterautobausatz Pyhton Steuerung
-Mit den beiden Programmen kann das SunFounder Roboter Auto (Raspberry Pi Version) ferngesteuert werden. Dazu müsst Ihr erst einmal der Anleitung von SunFounder folgen und das Auto exakt so aufbauen. Also die Verkabelung genau so machen und die Software wie beschrieben installieren.
+Mit den beiden Programmen kann das SunFounder Roboter "Smart Video Car" (Raspberry Pi Version) ferngesteuert werden. Dazu müsst Ihr erst einmal der Anleitung von SunFounder folgen und das Auto exakt so aufbauen. Also die Verkabelung genau so machen und die Software wie beschrieben installieren.
 Mein Roboter Auto auf Raspberry Pi Basis sieht wie folgt aus.
 ![SunFounder Roboterautobausatz](https://custom-build-robots.com/wp-content/uploads/2017/08/SunFounder_Roboterbausatz_Smart_Video_Car_Kit_Roboter_Auto-768x512.jpg)
 ## Bezugsquelle SunFounder Roboter Auto
